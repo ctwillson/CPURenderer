@@ -1,0 +1,15 @@
+cmake_minimum_required(VERSION 3.10)
+project(CPURender)
+
+set(SOURCES
+    main.cc
+    utils/math.h
+    utils/OBJLoader.cc
+    utils/OBJLoader.h
+    core/tgaimage.cc
+    core/tgaimage.h
+    core/draw2d.cc
+    core/draw2d.h
+)
+# file(GLOB SOURCES *.h *.cc)
+add_executable(${PROJECT_NAME} ${SOURCES})

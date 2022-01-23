@@ -1,5 +1,8 @@
 #ifndef __DRAW2D_H__
 #define __DRAW2D_H__
+#include "../utils/math.h"
+#include <vector>
 void drawLine(int x0, int y0, int x1, int y1, TGAImage &image, TGAColor color);
-void drawTriangle(Vec2i t0,Vec2i t1,Vec2i t2,TGAImage &image, TGAColor color);
+void drawTriangle(Vec3f* t,std::vector<float> &zbuffer,TGAImage &image, TGAColor color);
+Vec3f viewPort(Vec3f world_coord,int width,int height);
 #endif

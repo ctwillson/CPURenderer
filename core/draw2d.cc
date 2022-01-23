@@ -1,6 +1,9 @@
 #include "tgaimage.h"
-#include "../utils/math.h"
+#include "draw2d.h"
 #include <iostream>
+
+int width = 800;
+int height = 800;
 
 void drawLine(int x0, int y0, int x1, int y1, TGAImage &image, TGAColor color) {
     bool steep = false;
@@ -32,7 +35,7 @@ void drawLine(int x0, int y0, int x1, int y1, TGAImage &image, TGAColor color) {
     }
 }
 
-Vec3f barycentric_coords(int a,int b,Vec2i* v) {
+Vec3f barycentric_coords(int a,int b,Vec3f* v) {
     float x = a;
     float y = b;
     float alpha = (x*(v[1].y - v[2].y) + (v[2].x - v[1].x)*y + v[1].x*v[2].y - v[2].x*v[1].y) / (v[0].x*(v[1].y - v[2].y) + (v[2].x - v[1].x)*v[0].y + v[1].x*v[2].y - v[2].x*v[1].y);
@@ -41,23 +44,44 @@ Vec3f barycentric_coords(int a,int b,Vec2i* v) {
     // std::cout << alpha << " " << beta << " " << gamma << std::endl;
     return {alpha,beta,gamma};
 }
-bool insideTriangle(int x,int y ,Vec2i t0,Vec2i t1,Vec2i t2) {
-    Vec2i v[3] = {t0,t1,t2};
+
+bool insideTriangle(int x,int y ,Vec3f t0,Vec3f t1,Vec3f t2) {
+    Vec3f v[3] = {t0,t1,t2};
     Vec3f u = barycentric_coords(x,y,v);
-    return u.x > 0 && u.y > 0 && u.z > 0;
+    return u.x >= 0 && u.y >= 0 && u.z >= 0;
     // Vec3f u = cross(Vec3f(t2[0]-pts[0][0], pts[1][0]-pts[0][0], pts[0][0]-P[0]), Vec3f(pts[2][1]-pts[0][1], pts[1][1]-pts[0][1], pts[0][1]-P[1]));
 }
-void drawTriangle(Vec2i t0,Vec2i t1,Vec2i t2,TGAImage &image, TGAColor color) {
+
+bool insideTriangle(Vec3f u) {
+    return u.x >= 0 && u.y >= 0 && u.z >= 0;
+    // Vec3f u = cross(Vec3f(t2[0]-pts[0][0], pts[1][0]-pts[0][0], pts[0][0]-P[0]), Vec3f(pts[2][1]-pts[0][1], pts[1][1]-pts[0][1], pts[0][1]-P[1]));
+}
+//Viewport transform: ViewPort transfer world space to screen
+Vec3f viewPort(Vec3f world_coord,int width,int height) {
+    int wx = world_coord.x * width/2 + width/2 + 0.5;
+    int wy = world_coord.y * height/2 + height/2 + 0.5;
+    return Vec3f(wx,wy,world_coord.z);
+}
+void drawTriangle(Vec3f* t,std::vector<float> &zbuffer,TGAImage &image, TGAColor color) {
     //bounding box
-    int x_max = std::max(t0.x,std::max(t1.x,t2.x));
-    int x_min = std::min(t0.x,std::min(t1.x,t2.x));
-    int y_max = std::max(t0.y,std::max(t1.y,t2.y));
-    int y_min = std::min(t0.y,std::min(t1.y,t2.y));
-    std::cout << x_min <<" "<<x_max << " " << y_min << " " << y_max <<std::endl;
+    int x_max = std::max(t[0].x,std::max(t[1].x,t[2].x));
+    int x_min = std::min(t[0].x,std::min(t[1].x,t[2].x));
+    int y_max = std::max(t[0].y,std::max(t[1].y,t[2].y));
+    int y_min = std::min(t[0].y,std::min(t[1].y,t[2].y));
+
     for(int i = x_min;i <= x_max;i++)
         for(int j = y_min;j <= y_max;j++) {
-            if(insideTriangle(i,j,t0,t1,t2)) {
-                image.set(i, j, color);
+            // Vec3f barycentric_coords(x,y,);
+            Vec3f bc_screen  = barycentric_coords(i,j,t);
+            if(insideTriangle(bc_screen)) {
+                float z = 0;
+                int index = i + j * image.get_width();
+                for (int i=0; i<3; i++) z += t[i][2]*bc_screen[i];
+                if (zbuffer[index]<z) {
+                    zbuffer[index] = z;
+                    image.set(i, j, color);
+                }
+                // image.set(i, j, color);
             }
         }
 }

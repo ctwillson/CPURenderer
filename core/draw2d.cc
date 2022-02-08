@@ -62,7 +62,37 @@ Vec3f viewPort(Vec3f world_coord,int width,int height) {
     int wy = world_coord.y * height/2 + height/2 + 0.5;
     return Vec3f(wx,wy,world_coord.z);
 }
-void drawTriangle(Vec3f* t,std::vector<float> &zbuffer,TGAImage &image, TGAColor color) {
+    // Eigen::Vector3f getColor(float u, float v)
+    // {
+    //     auto u_img = u * width;
+    //     auto v_img = (1 - v) * height;
+    //     auto color = image_data.at<cv::Vec3b>(v_img, u_img);
+    //     return Eigen::Vector3f(color[0], color[1], color[2]);
+    // }
+TGAColor getcolor(float u,float v,TGAImage &texure) {
+    int width = texure.get_width();
+    int height = texure.get_height();
+    return texure.get(u * width ,v * height);
+
+}
+
+// static Eigen::Vector2f interpolate(float alpha, float beta, float gamma, const Eigen::Vector2f& vert1, const Eigen::Vector2f& vert2, const Eigen::Vector2f& vert3, float weight)
+// {
+//     auto u = (alpha * vert1[0] + beta * vert2[0] + gamma * vert3[0]);
+//     auto v = (alpha * vert1[1] + beta * vert2[1] + gamma * vert3[1]);
+
+//     u /= weight;
+//     v /= weight;
+
+//     return Eigen::Vector2f(u, v);
+// }
+Vec2f interpolate(Vec3f inter,Vec3f* tex_coords) {
+    float u = inter[0] * tex_coords[0].x + inter[1] * tex_coords[1].x + inter[2] * tex_coords[2].x;
+    // float v = inter[0] * (1 - tex_coords[0].y) + inter[1] * (1 - tex_coords[1].y) + inter[2] * (1 - tex_coords[2].y);
+    float v = inter[0] * tex_coords[0].y + inter[1] * tex_coords[1].y + inter[2] * tex_coords[2].y;
+    return Vec2f(u,v);
+}
+void drawTriangle(Vec3f* t,Vec3f* tex_coords,std::vector<float> &zbuffer,TGAImage &image, TGAImage &texure,TGAColor color) {
     //bounding box
     int x_max = std::max(t[0].x,std::max(t[1].x,t[2].x));
     int x_min = std::min(t[0].x,std::min(t[1].x,t[2].x));
@@ -79,7 +109,9 @@ void drawTriangle(Vec3f* t,std::vector<float> &zbuffer,TGAImage &image, TGAColor
                 for (int i=0; i<3; i++) z += t[i][2]*bc_screen[i];
                 if (zbuffer[index]<z) {
                     zbuffer[index] = z;
-                    image.set(i, j, color);
+                    Vec2f uv = interpolate(bc_screen,tex_coords);
+                    image.set(i, j, getcolor(uv[0],uv[1],texure));
+                    // image.set(i, j, color);
                 }
                 // image.set(i, j, color);
             }

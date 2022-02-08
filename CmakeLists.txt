@@ -4,6 +4,7 @@ project(CPURender)
 set(SOURCES
     main.cc
     utils/math.h
+    utils/math.cc
     utils/OBJLoader.cc
     utils/OBJLoader.h
     core/tgaimage.cc

@@ -1,6 +1,5 @@
-#include "ObjLoader.h"
+#include "OBJLoader.h"
 #include <iostream>
-#include <fstream>
 #include <fstream>
 
 OBJLoader::OBJLoader(const char *path) : vertices_(),facesV_(),facesT_(),facesN_() {
@@ -14,7 +13,7 @@ OBJLoader::OBJLoader(const char *path) : vertices_(),facesV_(),facesT_(),facesN_
         if(input == 'v') {
             fin.get(input);
 			// std::cout << input << std::endl;
-            if(input = ' ') {
+            if(input == ' ') {
                 /*Vertex*/
                 // fin >> vertices.emplace_back(x) >> vertices[vertexIndex].y >> vertices[vertexIndex].z;
                 Vec3f v;
@@ -24,9 +23,17 @@ OBJLoader::OBJLoader(const char *path) : vertices_(),facesV_(),facesT_(),facesN_
             }
             else if(input == 't') {
                 /*TODO: Texture Coordinate*/
+                Vec3f v;
+                fin >> v.x >> v.y >> v.z;
+				
+                texcoords_.emplace_back(v);
             }
             else if(input == 'n') {
                 /*TODO: Normal*/
+                Vec3f v;
+                fin >> v.x >> v.y >> v.z;
+				
+                normals_.emplace_back(v);
             }
         }
         else if (input == 'f') {    // face
@@ -39,6 +46,12 @@ OBJLoader::OBJLoader(const char *path) : vertices_(),facesV_(),facesT_(),facesN_
 				fv.x--;
 				fv.y--;
 				fv.z--;
+				ft.x--;
+				ft.y--;
+				ft.z--;
+				fn.x--;
+				fn.y--;
+				fn.z--;
                 facesV_.emplace_back(fv);
                 facesT_.emplace_back(ft);
                 facesN_.emplace_back(fn);
@@ -59,20 +72,29 @@ int OBJLoader::nfaces() {
     return facesV_.size();
 }
 
-Vec3i OBJLoader::face(int idx) {
+Vec3i OBJLoader::faceV(int idx) {
     return facesV_[idx];
 }
 
+Vec3i OBJLoader::faceT(int idx) {
+    return facesT_[idx];
+}
+//return vertex
 Vec3f OBJLoader::vert(int idx) {
     return vertices_[idx];
 }
 
+Vec3f OBJLoader::texture(int idx) {
+    return texcoords_[idx];
+}
+
+Vec3f OBJLoader::normal(int idx) {
+    return normals_[idx];
+}
 void OBJLoader::dump() {
-	std::cout << "begin dump" << std::endl;
-	std::cout << "vertex" << std::endl;
-	for(int i = 0;i < vertices_.size();i++) 
-		std::cout << vertices_[i].x<< "/"  << vertices_[i].y << "/" << vertices_[i].z <<std::endl;
-	std::cout << "face" << std::endl;
-    for(int i = 0;i < facesV_.size();i++)
-        std::cout << facesV_[i].x << "/" << facesV_[i].y << "/" << facesV_[i].z << std::endl;
+	std::ofstream in;
+	in.open("tex.txt",std::ios::trunc);
+	for(int i = 0;i < facesT_.size();i++)
+		in << texcoords_[facesT_[i].x].x<< "/"  << texcoords_[facesT_[i].y].y << "/" << texcoords_[facesT_[i].z].z << "\n";
+	in.close();
 }
